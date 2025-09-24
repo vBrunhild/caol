@@ -1,2 +1,9 @@
+# env
 .envrc
 .direnv/
+
+# migration
+caol.db
+
+# dependencies
+node_modules/

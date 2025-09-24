@@ -1,0 +1,25 @@
+<!-- packages/frontend/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Frontend</title>
+  <link href="node_modules/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-5">
+    <h1 class="text-primary">Hello from Frontend!</h1>
+    <button id="btn" class="btn btn-success">Click me</button>
+    <p id="response"></p>
+  </div>
+
+  <script>
+    document.getElementById('btn').addEventListener('click', async () => {
+      const res = await fetch('http://localhost:3000/api/hello');
+      const data = await res.json();
+      document.getElementById('response').innerText = data.message;
+    });
+  </script>
+</body>
+</html>
