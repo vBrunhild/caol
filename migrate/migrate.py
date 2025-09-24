@@ -12,7 +12,7 @@ CURRENT_DIR = Path(__file__).parent
 def hex_to_date(hex_str: str) -> str:
     return f"'{binascii.unhexlify(hex_str[2:]).decode()}'"
 
-def parse_row_item(item: str) -> Any:
+def parse_line_item(item: str) -> Any:
     item = item.lstrip(" ")
 
     if item == "'0000-00-00 00:00:00'":
@@ -27,7 +27,7 @@ def insert_line(db: sql.Connection, table: str, line: str) -> None:
     if line.startswith("INSERT"):
         start = line.find("VALUES")
         line = line[start + 7:]
-    line = [parse_row_item(item) for item in line[1:-3].split(",")]
+    line = [parse_line_item(item) for item in line[1:-3].split(",")]
     stmt = f"INSERT INTO {table} VALUES ({",".join(line)})"
     db.execute(stmt)
 
