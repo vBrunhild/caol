@@ -21,7 +21,6 @@
       in {
         default = pkgs.mkShell {
           buildInputs = [
-            pkgs.docker
             pkgs.pyrefly
             pkgs.ruff
             pkgs.uv
