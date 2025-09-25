@@ -1,0 +1,31 @@
+export interface User {
+  id: string;
+  name: string;
+  authorizationUserId: string | null;
+  registrationNumber: number | null;
+  birthDate: string | null;
+  companyAdmissionDate: string | null;
+  companyDismissalDate: string | null;
+  inclusionDate: string | null;
+  expirationDate: string | null;
+  cpf: string | null;
+  rg: string | null;
+  issuingAgency: string | null;
+  issuingState: string | null;
+  address: string | null;
+  email: string | null;
+  personalEmail: string | null;
+  phone: string | null;
+  lastModified: string;
+  photoUrl: string | null;
+  instantMessenger: string | null;
+  icq: number | null;
+  msn: string | null;
+  yahooMessenger: string | null;
+  addressComplement: string | null;
+  neighborhood: string | null;
+  postalCode: string | null;
+  city: string | null;
+  state: string | null;
+  issueDate: string | null;
+}
