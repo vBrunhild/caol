@@ -46,6 +46,8 @@ def main() -> None:
                     insert_line(connection, "cao_fatura", line)
                 elif index >= 82590 and index <= 83848:
                     insert_line(connection, "cao_os", line)
+                elif index >= 115050 and index <= 115055:
+                    insert_line(connection, "cao_salario", line)
                 elif index >= 116295 and index <= 116435:
                     insert_line(connection, "cao_usuario", line)
                 elif index >= 120386 and index <= 120536:

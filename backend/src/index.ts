@@ -13,14 +13,6 @@ app.get('/api/v1/consultant', (req, res) => {
   const { limit, offset } = parsePagination(req);
 
   const baseQuery = `
-    FROM cao_usuario
-    INNER JOIN permissao_sistema ON cao_usuario.co_usuario = permissao_sistema.co_usuario
-    WHERE permissao_sistema.co_sistema = 1
-      AND permissao_sistema.in_ativo = 'S'
-      AND permissao_sistema.co_tipo_usuario in (0, 1, 2)
-  `;
-
-  const dataStmt = db.prepare<[number, number], User>(`
     SELECT
       cao_usuario.co_usuario AS id,
       cao_usuario.no_usuario AS name,
@@ -51,12 +43,22 @@ app.get('/api/v1/consultant', (req, res) => {
       cao_usuario.no_cidade AS city,
       cao_usuario.uf_cidade AS state,
       cao_usuario.dt_expedicao AS issueDate
-      ${baseQuery}
+    FROM cao_usuario
+    INNER JOIN permissao_sistema ON cao_usuario.co_usuario = permissao_sistema.co_usuario
+    WHERE permissao_sistema.co_sistema = 1
+      AND permissao_sistema.in_ativo = 'S'
+      AND permissao_sistema.co_tipo_usuario in (0, 1, 2)
+  `;
+
+  const finalQuery = `
+    ${baseQuery}
     ORDER BY cao_usuario.co_usuario
     LIMIT ? OFFSET ?
-  `);
+  `;
 
-  const users = dataStmt.all(limit, offset);
+  const stmt = db.prepare<[number, number], User>(finalQuery);
+
+  const users = stmt.all(limit, offset);
   const total = getTotal(baseQuery);
   const hasNext = offset + limit < total;
 
@@ -72,49 +74,111 @@ app.get('/api/v1/consultant', (req, res) => {
 });
 
 app.get('/api/v1/consultant/monthly-totals', (req, res) => {
-  const { start, end, userIds } = req.query;
+  const { limit, offset } = parsePagination(req);
+  let { start, end, userId } = req.query;
+  start = start as string;
+  end = end as string;
 
   if (!start || !end) {
     return res.status(400).json({ error: 'start and end are required paremeters' });
   }
 
   const yearMonthRegex = /^\d{4}-\d{2}$/;
-  if (!yearMonthRegex.test(start as string) || !yearMonthRegex.test(end as string)) {
+  if (!yearMonthRegex.test(start) || !yearMonthRegex.test(end)) {
     return res.status(400).json({
       error: 'Invalid year month format. Use YYYY-MM format (e.g., 2024-01)',
     });
   }
 
-  let userIdList: string[] | null = null;
-  if (userIds) {
-    try {
-      userIdList = Array.isArray(userIds) ? userIds as string[] : null;
-    } catch (error) {
-      return res.status(400).json({
-        error: 'Invalid userIds format',
-      });
-    }
+  const userIdList: string[] = [];
+  if (Array.isArray(userId)) {
+    userIdList.push(...userId.filter(id => typeof id === "string") as string[])
+  } else if (typeof userId === "string") {
+    userIdList.push(userId)
   }
 
-  let baseQuery = `
+  let consultantCte = `
     SELECT
-      cao_usuario.co_usuario as userId,
-      cao_usuario.no_usuario as userName,
-      CAST(strftime('%Y', cao_fatura.data_emissao) AS INTEGER) as year,
-      CAST(strftime('%m', cao_fatura.data_emissao) AS INTEGER) as month,
-      SUM(cao_fatura.valor - (cao_fatura.valor * cao_fatura.total_imp_inc / 100)) as netValue
-    FROM cao_fatura
-    INNER JOIN cao_os ON cao_fatura.co_os = cao_os.co_os
-    INNER JOIN cao_usuario ON cao_os.co_usuario = cao_usuario.co_usuario
+      cao_usuario.co_usuario,
+      cao_usuario.no_usuario
+    FROM cao_usuario
     INNER JOIN permissao_sistema ON cao_usuario.co_usuario = permissao_sistema.co_usuario
     WHERE permissao_sistema.co_sistema = 1
       AND permissao_sistema.in_ativo = 'S'
-      AND permissao_sistema.co_tipo_usuario IN (0, 1, 2)
-      AND cao_fatura.data_emissao IS NOT NULL
+      AND permissao_sistema.co_tipo_usuario in (0, 1, 2)
   `;
 
-  let stmt = db.prepare<[string, string], Record<string, any>>(baseQuery);
-  res.json(stmt.all('', ''))
+  const queryParams = [];
+  if (userIdList.length > 0) {
+    const placeholders = userIdList.map(() => '?').join(',');
+    consultantCte += ` AND cao_usuario.co_usuario IN (${placeholders})`;
+    queryParams.push(...userIdList);
+  }
+  queryParams.push(start, end)
+
+  const baseQuery = `
+    WITH consultant AS (${consultantCte}),
+    monthly_revenue AS (
+      SELECT
+        consultant.co_usuario,
+        consultant.no_usuario,
+        CAST(strftime('%Y', cao_fatura.data_emissao) AS INTEGER) as year,
+        CAST(strftime('%m', cao_fatura.data_emissao) AS INTEGER) as month,
+        cao_fatura.valor - (cao_fatura.valor * cao_fatura.total_imp_inc / 100) as net_invoice_value,
+        (cao_fatura.valor - (cao_fatura.valor * cao_fatura.total_imp_inc / 100)) * cao_fatura.comissao_cn / 100 as comission_value
+      FROM cao_fatura
+      INNER JOIN cao_os ON cao_fatura.co_os = cao_os.co_os
+      INNER JOIN consultant ON cao_os.co_usuario = consultant.co_usuario
+      WHERE cao_fatura.data_emissao IS NOT NULL
+        AND strftime('%Y-%m', cao_fatura.data_emissao) >= ?
+        AND strftime('%Y-%m', cao_fatura.data_emissao) <= ?
+    ),
+    aggregated_data AS (
+      SELECT
+        monthly_revenue.co_usuario,
+        monthly_revenue.no_usuario,
+        monthly_revenue.year,
+        monthly_revenue.month,
+        ROUND(SUM(monthly_revenue.net_invoice_value), 2) as net_value,
+        ROUND(SUM(monthly_revenue.comission_value), 2) as comission_value
+      FROM monthly_revenue
+      GROUP BY monthly_revenue.co_usuario, monthly_revenue.no_usuario, monthly_revenue.year, monthly_revenue.month
+    )
+    SELECT
+      aggregated_data.co_usuario as userId,
+      aggregated_data.no_usuario as userName,
+      aggregated_data.year,
+      aggregated_data.month,
+      aggregated_data.net_value as netValue,
+      aggregated_data.comission_value as comissionValue,
+      cao_salario.brut_salario as fixedCost,
+      aggregated_data.net_value - aggregated_data.comission_value - cao_salario.brut_salario as profit
+    FROM aggregated_data
+    INNER JOIN cao_salario ON aggregated_data.co_usuario = cao_salario.co_usuario
+  `;
+
+  const finalQuery = `
+    ${baseQuery}
+    ORDER BY aggregated_data.co_usuario, aggregated_data.year, aggregated_data.month
+    LIMIT ? OFFSET ?
+  `;
+
+  queryParams.push(limit, offset)
+  let stmt = db.prepare<(string | number)[], Record<string, any>>(finalQuery);
+  let monthly = stmt.all(...queryParams);
+
+  const total = getTotal(baseQuery, queryParams);
+  const hasNext = offset + limit < total;
+
+  let result: PaginationResult<Record<string, any>> = {
+      limit,
+      offset,
+      total,
+      hasNext,
+      content: monthly
+  };
+
+  res.json(result)
 });
 
 app.listen(PORT, () => {
