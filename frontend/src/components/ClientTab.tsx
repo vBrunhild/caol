@@ -41,7 +41,7 @@ import {
   Tooltip as RechartsTooltip
 } from 'recharts';
 import { Dayjs } from 'dayjs';
-import { PaginationResult, Client, ClientMonthlyTotal } from 'shared/src/types';
+import { PaginationResult, Client, ClientMonthlyTotal } from '../types';
 import YearMonthPicker from './ui/YearMonthPicker';
 import {
     YearMonth,

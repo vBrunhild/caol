@@ -42,7 +42,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { Dayjs } from 'dayjs';
-import { PaginationResult, ConsultantMonthlyTotal, User } from 'shared/src/types';
+import { PaginationResult, ConsultantMonthlyTotal, User } from '../types';
 import YearMonthPicker from './ui/YearMonthPicker';
 import {
   YearMonth,

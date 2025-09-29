@@ -39,14 +39,14 @@ import {
 } from 'recharts';
 import { Dayjs } from 'dayjs';
 import {
-  PaginationResult,
-  Client,
-  User,
-  Invoice,
-  ServiceOrder,
-  ClientMonthlyTotal,
-  ConsultantMonthlyTotal
-} from 'shared/src/types';
+    PaginationResult,
+    Client,
+    User,
+    Invoice,
+    ServiceOrder,
+    ClientMonthlyTotal,
+    ConsultantMonthlyTotal
+} from '../types';
 import YearMonthPicker from './ui/YearMonthPicker';
 import {
   dayjsToYearMonth,

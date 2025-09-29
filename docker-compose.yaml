@@ -1,0 +1,38 @@
+services:
+  migration:
+    build:
+      context: .
+      target: migration
+      network: host
+    volumes:
+      - db-data:/data
+    command: python migrate.py
+
+  backend:
+    build:
+      context: .
+      target: backend
+      network: host
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - db-data:/data
+    depends_on:
+      - migration
+
+  frontend:
+    build:
+      context: .
+      target: frontend
+      network: host
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - backend
+
+volumes:
+  db-data:
