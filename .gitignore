@@ -7,3 +7,7 @@ caol.db
 
 # dependencies
 node_modules/
+
+# build
+dist/
+tsconfig.tsbuildinfo
