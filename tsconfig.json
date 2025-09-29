@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "incremental": true,
     "target": "ES2024",
     "module": "ESNext",
     "moduleResolution": "bundler",
@@ -12,14 +13,6 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
-    "baseUrl": ".",
-    "paths": {
-      "@caol/shared": ["./shared/src"]
-    }
-  },
-  "references": [
-    { "path": "./backend" },
-    { "path": "./frontend" },
-    { "path": "./shared" }
-  ]
+    "baseUrl": "."
+  }
 }
