@@ -1,31 +1,21 @@
 services:
-  migration:
-    build:
-      context: .
-      target: migration
-      network: host
-    volumes:
-      - db-data:/data
-    command: python migrate.py
-
   backend:
     build:
       context: .
-      target: backend
+      dockerfile: Dockerfile.backend
       network: host
+    container_name: backend
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
     volumes:
-      - db-data:/data
-    depends_on:
-      - migration
+      - db-data:/prod/backend
 
   frontend:
     build:
       context: .
-      target: frontend
+      dockerfile: Dockerfile.frontend
       network: host
     ports:
       - "3001:3001"
