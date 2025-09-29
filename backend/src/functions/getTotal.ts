@@ -1,4 +1,4 @@
-import { db } from "backend/src/database";
+import { db } from "../database.js";
 
 export function getTotal(baseQuery: string, params: any[] = []): number {
   const query = `SELECT COUNT(*) as total FROM (${baseQuery})`;

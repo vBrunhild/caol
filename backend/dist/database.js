@@ -1,5 +1,4 @@
 import sql from "better-sqlite3";
-
 /*
  * Optei por sqlite pela praticidade e simplicidade para entrega.
  *
@@ -9,5 +8,4 @@ import sql from "better-sqlite3";
  * Normalmente por isso o mesmo não seria ideal para propósitos de cálculos de valores monetários.
  * Em um projeto real um db mais adequado como postgresql seria utilizado.
  */
-
-export const db: sql.Database = new sql(process.env.DB_PATH);
+export const db = new sql(process.env.DB_PATH);

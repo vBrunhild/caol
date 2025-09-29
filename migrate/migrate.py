@@ -28,7 +28,7 @@ def insert_line(db: sql.Connection, table: str, line: str) -> None:
         start = line.find("VALUES")
         line = line[start + 7:]
     line = [parse_line_item(item) for item in line[1:-3].split(",")]
-    stmt = f"INSERT INTO {table} VALUES ({",".join(line)})"
+    stmt = f"INSERT OR IGNORE INTO {table} VALUES ({",".join(line)})"
     db.execute(stmt)
 
 def main() -> None:

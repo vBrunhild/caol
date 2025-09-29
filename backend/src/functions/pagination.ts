@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { PaginationParams } from 'backend/src/types/pagination';
+import PaginationParams from '../types.js';
 
 export function parsePagination(req: Request): PaginationParams {
   const limit = parseInt(req.query.limit as string ?? "10", 10);
